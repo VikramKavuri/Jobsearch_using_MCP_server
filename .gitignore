@@ -13,7 +13,12 @@ build/
 # Vercel
 .vercel
 
+# TypeScript / Next.js generated
+*.tsbuildinfo
+next-env.d.ts
+
 # Misc
 *.log
 .DS_Store
 coverage/
+.gstack/
