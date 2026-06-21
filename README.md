@@ -90,8 +90,15 @@ curl -s -X POST http://localhost:3000/api/mcp \
 | `POST /api/letter` | `{ profile, job:{title,company}, tone? }` | `{ text, tone, mode }` |
 | `POST /api/qa` | `{ question, profile, context? }` | `{ answer, mode }` |
 
-Set `live: true` on `/api/jobs` to also pull keyless live listings from the
-Remotive API (falls back to the bundled sample on any failure).
+Set `live: true` on `/api/jobs` to pull keyless live listings from **five public
+sources** — Remotive, The Muse, Arbeitnow, RemoteOK, and Jobicy — fetched in
+parallel, filtered by the profile's role and location, merged + de-duplicated,
+and ranked. **Every live link is reachability-checked before it's returned** (404/
+gone links are dropped); the response includes `sources`, `count`, and a
+`validated` flag. Falls back to the bundled sample if all sources fail.
+
+> Attribution: live data comes from Remotive, The Muse, Arbeitnow, RemoteOK and
+> Jobicy. RemoteOK and The Muse ask that you credit them when displaying results.
 
 ## How it works
 

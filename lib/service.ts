@@ -6,11 +6,15 @@
 import { loadConfig } from "./config";
 import { createLlm } from "./llm";
 import { getJobs } from "./jobs-source";
+import { validateJobLinks } from "./link-check";
 import { normalizeProfile, type ProfileInput } from "./tools/profile";
 import { searchJobs, type SearchInput } from "./tools/search";
 import { generateLetter, type LetterInput } from "./tools/letter";
 import { answerQuestion, type QaInput } from "./tools/qa";
 import type { Profile, RankedJob, Tone } from "./types";
+
+/** Extra jobs to rank beyond `limit` so dropping dead links still fills the page. */
+const LINK_VALIDATE_BUFFER = 8;
 
 export interface AppStatus {
   mode: "demo" | "live";
@@ -33,11 +37,51 @@ export function runProfile(input: ProfileInput): Profile {
   return normalizeProfile(input);
 }
 
-export type SearchArgs = Omit<SearchInput, "jobs"> & { live?: boolean };
+export type SearchArgs = Omit<SearchInput, "jobs"> & {
+  live?: boolean;
+  /** Validate each job URL before returning (defaults on for live search). */
+  validateLinks?: boolean;
+};
 
-export async function runSearch(input: SearchArgs): Promise<RankedJob[]> {
-  const jobs = await getJobs({ live: input.live, query: input.query });
-  return searchJobs({ ...input, jobs });
+export interface SearchResult {
+  jobs: RankedJob[];
+  count: number;
+  /** Distinct sources represented in the results. */
+  sources: string[];
+  /** Whether returned links were reachability-checked. */
+  validated: boolean;
+}
+
+export async function runSearch(input: SearchArgs): Promise<SearchResult> {
+  const profile = input.profile ?? {};
+  // Profile-driven filters: role keyword (query box, else the profile title)
+  // and location feed the source APIs; ranking + the location filter narrow.
+  const role = input.query?.trim() || profile.title?.trim() || "";
+  const location = input.location ?? profile.location;
+  const limit = input.limit ?? 10;
+
+  const fetched = await getJobs({ live: input.live, query: role, location });
+  const hasLive = fetched.some((j) => j.source && j.source !== "Sample");
+  const validate =
+    Boolean(input.live) && hasLive && (input.validateLinks ?? true);
+
+  const ranked = searchJobs({
+    ...input,
+    location,
+    jobs: fetched,
+    limit: validate ? limit + LINK_VALIDATE_BUFFER : limit,
+  });
+
+  const jobs = validate
+    ? (await validateJobLinks(ranked)).slice(0, limit)
+    : ranked.slice(0, limit);
+
+  return {
+    jobs,
+    count: jobs.length,
+    sources: [...new Set(jobs.map((j) => j.source).filter(Boolean) as string[])],
+    validated: validate,
+  };
 }
 
 export async function runLetter(

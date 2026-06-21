@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import type { RankedJob, Tone } from "@/lib/types";
 
 type TabId = "profile" | "search" | "letter" | "qa";
+type SearchResponse = {
+  jobs: RankedJob[];
+  count: number;
+  sources: string[];
+  validated: boolean;
+};
 type Status = {
   mode: "demo" | "live";
   provider: string;
@@ -286,7 +292,7 @@ function SearchTab({
   const [query, setQuery] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [live, setLive] = useState(false);
-  const [jobs, setJobs] = useState<RankedJob[] | null>(null);
+  const [result, setResult] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -294,14 +300,14 @@ function SearchTab({
     setLoading(true);
     setError("");
     try {
-      const data = await postJSON<{ jobs: RankedJob[] }>("/api/jobs", {
+      const data = await postJSON<SearchResponse>("/api/jobs", {
         query,
         profile,
         remoteOnly,
         live,
         limit: 12,
       });
-      setJobs(data.jobs);
+      setResult(data);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -314,8 +320,9 @@ function SearchTab({
       <div className="panel-head">
         <h2 className="panel-title">Find matching roles</h2>
         <p className="panel-note">
-          Ranked by TF-IDF similarity to your query + profile, with a fit score
-          and the reasons behind each match.
+          Ranked by TF-IDF similarity to your query + profile. Enable live
+          listings to pull from 5 sources, filtered by your profile&apos;s role &amp;
+          location — every link is checked before it&apos;s shown.
         </p>
       </div>
 
@@ -330,7 +337,11 @@ function SearchTab({
 
       <div className="controls">
         <button className="btn" onClick={run} disabled={loading}>
-          {loading ? "Ranking…" : "Search jobs"}
+          {loading
+            ? live
+              ? "Searching live sources…"
+              : "Ranking…"
+            : "Search jobs"}
         </button>
         <label className="checkbox">
           <input
@@ -352,19 +363,30 @@ function SearchTab({
 
       {error && <div className="notice error">{error}</div>}
 
-      {jobs && (
+      {result && (
         <div className="result">
           <p className="section-rule">
-            {jobs.length} {jobs.length === 1 ? "match" : "matches"}
+            {result.count} {result.count === 1 ? "match" : "matches"}
+            {result.validated ? " · links checked" : ""}
           </p>
-          {jobs.length === 0 ? (
-            <p className="empty">No matches — try a broader query.</p>
+          {result.count === 0 ? (
+            <p className="empty">
+              No matches — try a broader query{live ? "" : " or enable live listings"}.
+            </p>
           ) : (
-            <div className="jobs">
-              {jobs.map((job) => (
-                <JobCard key={job.id} job={job} onDraftLetter={onDraftLetter} />
-              ))}
-            </div>
+            <>
+              <div className="jobs">
+                {result.jobs.map((job) => (
+                  <JobCard key={job.id} job={job} onDraftLetter={onDraftLetter} />
+                ))}
+              </div>
+              {result.sources.length > 0 && (
+                <p className="attribution">
+                  Sources: {result.sources.join(" · ")}
+                  {result.validated ? " — every link verified reachable" : ""}
+                </p>
+              )}
+            </>
           )}
         </div>
       )}
@@ -391,6 +413,9 @@ function JobCard({
           {job.company} · {job.location} · {job.type}
           {job.salary ? ` · ${job.salary}` : ""}
         </p>
+        {job.source && job.source !== "Sample" && (
+          <span className="source-chip">via {job.source}</span>
+        )}
       </div>
 
       <div className="fit">

@@ -70,6 +70,21 @@ describe("searchJobs", () => {
     expect(top.match_reasons.join(" ").toLowerCase()).toContain("python");
   });
 
+  test("location filter matches on shared tokens, not just exact substrings", () => {
+    // Profile says "New York, USA"; the job is listed as "New York, NY".
+    // A naive substring check would miss it; token overlap (new, york) catches it.
+    const results = searchJobs({
+      query: "developer engineer",
+      profile,
+      jobs,
+      location: "New York, USA",
+    });
+    const ids = results.map((r) => r.id);
+    expect(ids).toContain("1"); // remote — always allowed
+    expect(ids).toContain("2"); // "New York, NY" — shares tokens
+    expect(ids).not.toContain("3"); // Los Angeles — no overlap, filtered out
+  });
+
   test("remoteOnly filters out on-site roles", () => {
     const results = searchJobs({ query: "developer", profile, jobs, remoteOnly: true });
     expect(results.every((r) => r.remote)).toBe(true);

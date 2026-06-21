@@ -32,10 +32,10 @@ const jobShape = z.object({
   description: z.string().optional(),
 });
 
-function ok(data: Record<string, unknown>) {
+function ok(data: object) {
   return {
     content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
-    structuredContent: data,
+    structuredContent: data as Record<string, unknown>,
   };
 }
 
@@ -57,7 +57,7 @@ const handler = createMcpHandler(
       {
         title: "Search Jobs",
         description:
-          "Rank jobs against a query and profile. Returns jobs with a fit_score (0-100) and match_reasons. Set live=true to also pull keyless live listings.",
+          "Rank jobs against a query and profile. Returns jobs with a fit_score (0-100), match_reasons and a source label. Set live=true to pull keyless live listings from five sources (Remotive, The Muse, Arbeitnow, RemoteOK, Jobicy), filtered by the profile's role/location; live results have their links reachability-checked before being returned. Set validateLinks=false to skip that check.",
         inputSchema: {
           query: z.string().optional(),
           profile: profileObject.optional(),
@@ -65,12 +65,10 @@ const handler = createMcpHandler(
           remoteOnly: z.boolean().optional(),
           location: z.string().optional(),
           live: z.boolean().optional(),
+          validateLinks: z.boolean().optional(),
         },
       },
-      async (input) => {
-        const jobs = await runSearch(input);
-        return ok({ jobs, count: jobs.length });
-      },
+      async (input) => ok(await runSearch(input)),
     );
 
     server.registerTool(

@@ -35,6 +35,8 @@ export interface Job {
   salary?: string;
   /** ISO date string. */
   postedAt?: string;
+  /** Where this job came from, e.g. "Sample", "Remotive", "The Muse". */
+  source?: string;
 }
 
 /** A job augmented with how well it fits the query + profile. */

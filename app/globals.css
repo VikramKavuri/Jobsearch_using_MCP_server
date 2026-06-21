@@ -429,11 +429,37 @@ textarea::placeholder {
   text-transform: uppercase;
   margin-top: 0.2rem;
 }
+.source-chip {
+  display: inline-block;
+  margin-top: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-ink);
+  background: var(--gold-wash);
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+}
+.attribution {
+  margin: 1.1rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
 .job-desc {
   grid-column: 1 / -1;
   font-size: 0.92rem;
   color: var(--ink-mid);
   margin: 0.35rem 0 0;
+  /* keep long live-source descriptions scannable */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* fit score = big shiny gold serif numeral + emerald ink bar */

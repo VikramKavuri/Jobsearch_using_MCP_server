@@ -20,6 +20,15 @@ const TEXT_WEIGHT = 0.6;
 const SKILL_WEIGHT = 0.4;
 const DEFAULT_LIMIT = 10;
 
+/** Lowercased location tokens (length >= 2), used for token-overlap matching so
+ * "New York, USA" matches a job listed as "New York, NY". */
+function locationTokens(location: string): string[] {
+  return location
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 2);
+}
+
 function jobDocument(job: Job): string {
   return [
     job.title,
@@ -41,13 +50,14 @@ export function searchJobs(input: SearchInput): RankedJob[] {
   const { jobs, profile = {}, query = "" } = input;
   const limit = input.limit ?? DEFAULT_LIMIT;
 
-  // Filtering first so ranking only considers eligible jobs.
-  const locationNeedle = input.location?.trim().toLowerCase();
+  // Filtering first so ranking only considers eligible jobs. Remote jobs always
+  // pass a location filter; on-site jobs must share a location token.
+  const needleTokens = locationTokens(input.location ?? "");
   const eligible = jobs.filter((job) => {
     if (input.remoteOnly && !job.remote) return false;
-    if (locationNeedle) {
-      const inLocation = job.location.toLowerCase().includes(locationNeedle);
-      if (!job.remote && !inLocation) return false;
+    if (needleTokens.length > 0 && !job.remote) {
+      const jobTokens = new Set(locationTokens(job.location));
+      if (!needleTokens.some((t) => jobTokens.has(t))) return false;
     }
     return true;
   });
