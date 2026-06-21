@@ -151,3 +151,7 @@ never drift.
 - **Attribution:** live job data comes from Remotive, The Muse, Arbeitnow, RemoteOK and Jobicy. RemoteOK and The Muse ask that you credit them when displaying results.
 - Stateless by design — no database; your profile lives in the browser.
 - A clean Vercel rebuild of the original Hugging Face Spaces "Job Search MCP" concept (no torch / faiss / Gradio).
+
+## License
+
+[MIT](LICENSE) © VikramKavuri
