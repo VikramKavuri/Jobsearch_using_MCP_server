@@ -2,7 +2,12 @@
 // that reads env to decide whether live AI is available, so the tools never
 // branch on environment themselves.
 
-export type Provider = "openai" | "anthropic" | "huggingface" | "demo";
+export type Provider =
+  | "groq"
+  | "openai"
+  | "anthropic"
+  | "huggingface"
+  | "demo";
 
 export interface AppConfig {
   mode: "demo" | "live";
@@ -16,20 +21,24 @@ export interface AppConfig {
 
 type Env = Record<string, string | undefined>;
 
-/** Provider detection order when LLM_PROVIDER is "auto" (or unset). */
+/** Provider detection order when LLM_PROVIDER is "auto" (or unset).
+ * Groq is first: it offers fast, free, OpenAI-compatible inference. */
 const AUTO_ORDER: { provider: Exclude<Provider, "demo">; keyVar: string }[] = [
+  { provider: "groq", keyVar: "GROQ_API_KEY" },
   { provider: "anthropic", keyVar: "ANTHROPIC_API_KEY" },
   { provider: "openai", keyVar: "OPENAI_API_KEY" },
   { provider: "huggingface", keyVar: "HF_TOKEN" },
 ];
 
 const DEFAULT_MODEL: Record<Exclude<Provider, "demo">, string> = {
+  groq: "llama-3.3-70b-versatile",
   anthropic: "claude-haiku-4-5-20251001",
   openai: "gpt-4o-mini",
   huggingface: "meta-llama/Llama-3.1-8B-Instruct",
 };
 
 const KEY_VAR: Record<Exclude<Provider, "demo">, string> = {
+  groq: "GROQ_API_KEY",
   anthropic: "ANTHROPIC_API_KEY",
   openai: "OPENAI_API_KEY",
   huggingface: "HF_TOKEN",
@@ -57,6 +66,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
       }
     }
   } else if (
+    requested === "groq" ||
     requested === "anthropic" ||
     requested === "openai" ||
     requested === "huggingface"

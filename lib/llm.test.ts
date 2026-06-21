@@ -16,4 +16,11 @@ describe("createLlm", () => {
     expect(llm.mode).toBe("live");
     expect(llm.model).toBe("gpt-4.1");
   });
+
+  test("wires up Groq with its default model when GROQ_API_KEY is set", () => {
+    const cfg = loadConfig({ GROQ_API_KEY: "gsk_xxx" });
+    const llm = createLlm(cfg, { GROQ_API_KEY: "gsk_xxx" });
+    expect(llm.mode).toBe("live");
+    expect(llm.model).toMatch(/llama/);
+  });
 });

@@ -23,13 +23,16 @@ const demoLlm = (config: AppConfig): Llm => ({
   },
 });
 
-async function callOpenAI(
+/** Shared handler for OpenAI-compatible chat-completion APIs (OpenAI, Groq). */
+async function callOpenAICompatible(
+  endpoint: string,
+  providerLabel: string,
   apiKey: string,
   config: AppConfig,
   prompt: string,
   opts: CompleteOpts,
 ): Promise<string> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -45,9 +48,44 @@ async function callOpenAI(
       ],
     }),
   });
-  if (!res.ok) throw new Error(`OpenAI error ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    throw new Error(`${providerLabel} error ${res.status}: ${await res.text()}`);
+  }
   const data = await res.json();
   return data.choices?.[0]?.message?.content ?? "";
+}
+
+function callOpenAI(
+  apiKey: string,
+  config: AppConfig,
+  prompt: string,
+  opts: CompleteOpts,
+): Promise<string> {
+  return callOpenAICompatible(
+    "https://api.openai.com/v1/chat/completions",
+    "OpenAI",
+    apiKey,
+    config,
+    prompt,
+    opts,
+  );
+}
+
+function callGroq(
+  apiKey: string,
+  config: AppConfig,
+  prompt: string,
+  opts: CompleteOpts,
+): Promise<string> {
+  // Groq exposes an OpenAI-compatible API.
+  return callOpenAICompatible(
+    "https://api.groq.com/openai/v1/chat/completions",
+    "Groq",
+    apiKey,
+    config,
+    prompt,
+    opts,
+  );
 }
 
 async function callAnthropic(
@@ -105,6 +143,7 @@ async function callHuggingFace(
 }
 
 const KEY_VAR: Record<string, string> = {
+  groq: "GROQ_API_KEY",
   openai: "OPENAI_API_KEY",
   anthropic: "ANTHROPIC_API_KEY",
   huggingface: "HF_TOKEN",
@@ -122,6 +161,8 @@ export function createLlm(config: AppConfig, env: Env = process.env): Llm {
     model: config.model,
     async complete(prompt: string, opts: CompleteOpts = {}): Promise<string> {
       switch (config.provider) {
+        case "groq":
+          return callGroq(apiKey, config, prompt, opts);
         case "openai":
           return callOpenAI(apiKey, config, prompt, opts);
         case "anthropic":

@@ -47,8 +47,10 @@ vercel --prod        # production deploy
 
 Vercel auto-detects Next.js — no extra config. To enable live AI on the
 deployment, add an API key under **Project → Settings → Environment Variables**
-(`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `HF_TOKEN`) and redeploy. The banner in
-the UI shows whether you're in **Demo** or **Live AI** mode.
+(`GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `HF_TOKEN`) and
+redeploy. Provider auto-detection order is `groq > anthropic > openai >
+huggingface`; [Groq](https://console.groq.com) is fast and free. The banner in the
+UI shows whether you're in **Demo** or **Live AI** mode.
 
 ## Connect as an MCP server
 
@@ -102,7 +104,7 @@ lib/
   tools/{profile,search,letter,qa}.ts   pure capability functions (+ unit tests)
   ranking.ts                   TF-IDF cosine over job text (pure TS)
   config.ts                    env → real-vs-demo decision (the only env reader)
-  llm.ts                       provider abstraction (OpenAI / Anthropic / HF ↔ demo)
+  llm.ts                       provider abstraction (Groq / OpenAI / Anthropic / HF ↔ demo)
   jobs-source.ts               bundled sample + optional keyless live fetch
   service.ts                   composition root used by both REST and MCP
 data/sample-jobs.json          16 deduped, diverse sample roles

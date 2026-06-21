@@ -39,6 +39,27 @@ describe("loadConfig", () => {
     expect(cfg.provider).toBe("openai");
   });
 
+  test("auto-detects Groq when GROQ_API_KEY is set", () => {
+    const cfg = loadConfig({ GROQ_API_KEY: "gsk_xxx" });
+    expect(cfg.mode).toBe("live");
+    expect(cfg.provider).toBe("groq");
+    expect(cfg.model).toMatch(/llama/);
+  });
+
+  test("prefers Groq over other providers in auto mode", () => {
+    const cfg = loadConfig({
+      GROQ_API_KEY: "gsk_xxx",
+      ANTHROPIC_API_KEY: "sk-ant-xxx",
+      OPENAI_API_KEY: "sk-xxx",
+    });
+    expect(cfg.provider).toBe("groq");
+  });
+
+  test("honors an explicit LLM_PROVIDER=groq when its key is present", () => {
+    const cfg = loadConfig({ LLM_PROVIDER: "groq", GROQ_API_KEY: "gsk_xxx" });
+    expect(cfg.provider).toBe("groq");
+  });
+
   test("falls back to demo when an explicit provider has no key", () => {
     const cfg = loadConfig({ LLM_PROVIDER: "anthropic" });
     expect(cfg.mode).toBe("demo");
