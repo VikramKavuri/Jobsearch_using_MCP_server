@@ -10,8 +10,12 @@
   <a href="https://job-search-mcp-tau.vercel.app">
     <img alt="Live Demo" src="https://img.shields.io/badge/▶_Live_Demo-job--search--mcp--tau.vercel.app-0b6e4f?style=for-the-badge&labelColor=0b0b0c">
   </a>
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-0b0b0c?style=for-the-badge">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-68_passing-9c7a14?style=for-the-badge">
+  <a href="https://github.com/VikramKavuri/Jobsearch_using_MCP_server/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/VikramKavuri/Jobsearch_using_MCP_server/actions/workflows/ci.yml/badge.svg">
+  </a>
+  <img alt="Tests" src="https://img.shields.io/badge/tests-68_passing-9c7a14?style=flat-square">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-0b0b0c?style=flat-square">
 </p>
 
 > **▶ Try it now:** **https://job-search-mcp-tau.vercel.app**
@@ -145,6 +149,24 @@ no env, no network — and unit-tested in isolation. `lib/config.ts` is the only
 that reads env and decides demo-vs-live; tools receive an injected `llm` and never
 branch on environment. REST and MCP both call `lib/service.ts`, so the two faces can
 never drift.
+
+> **Deeper dive:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) covers the data flow,
+> the design trade-offs, and an honest "what would change to run this at scale".
+
+## Engineering highlights
+
+- **One core, three surfaces.** Web UI, REST, and MCP are thin adapters over a single
+  composition root (`lib/service.ts`) — zero duplicated logic, so the surfaces can't drift.
+- **Testable by construction.** The ranking and the four capabilities are pure functions;
+  **68 deterministic unit tests** run offline (Vitest), exercised in CI on every push.
+- **Resilient by design.** Five live sources are fetched in parallel and each degrades to
+  `[]` on failure; results are de-duped, ranked, and **every link is reachability-checked**
+  before it reaches the board — a single dead source or dead link never breaks search.
+- **Pluggable AI.** A provider abstraction (`lib/llm.ts`) swaps Groq / OpenAI / Anthropic /
+  HF behind one interface, with a deterministic demo path so nothing requires a key.
+- **Honest about scale.** The architecture doc names the limitations (in-memory TF-IDF,
+  per-request fetching) and the concrete path to production (caching, embeddings,
+  persistence, observability) — each a localized change thanks to the boundaries above.
 
 ## Notes
 
