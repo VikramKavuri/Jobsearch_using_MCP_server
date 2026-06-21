@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 880 320" width="880" height="320" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" role="img" aria-label="Job Search Dossier pulls jobs from five keyless sources, ranks them and validates every link">
+  <rect x="8" y="8" width="864" height="304" rx="16" fill="#ffffff" stroke="#d9d9dd" stroke-width="1.5"/>
+  <text x="28" y="38" font-size="13" letter-spacing="2.5" fill="#9c7a14">WHERE IT FINDS JOBS — 5 KEYLESS SOURCES</text>
+
+  <!-- connector paths -->
+  <g fill="none" stroke="#e3e3e6" stroke-width="2">
+    <path id="p1" d="M216,82  C 380,82  480,160 600,160"/>
+    <path id="p2" d="M216,126 C 380,126 490,160 600,160"/>
+    <path id="p3" d="M216,170 C 400,170 510,160 600,160"/>
+    <path id="p4" d="M216,214 C 400,214 500,160 600,160"/>
+    <path id="p5" d="M216,258 C 380,258 490,160 600,160"/>
+  </g>
+
+  <!-- travelling pulses -->
+  <circle r="4.5" fill="#0f9468"><animateMotion dur="2.2s" begin="0.4s"  repeatCount="indefinite"><mpath xlink:href="#p1"/></animateMotion></circle>
+  <circle r="4.5" fill="#c9a84c"><animateMotion dur="2.2s" begin="0.85s" repeatCount="indefinite"><mpath xlink:href="#p2"/></animateMotion></circle>
+  <circle r="4.5" fill="#0f9468"><animateMotion dur="2.2s" begin="1.3s"  repeatCount="indefinite"><mpath xlink:href="#p3"/></animateMotion></circle>
+  <circle r="4.5" fill="#c9a84c"><animateMotion dur="2.2s" begin="1.75s" repeatCount="indefinite"><mpath xlink:href="#p4"/></animateMotion></circle>
+  <circle r="4.5" fill="#0f9468"><animateMotion dur="2.2s" begin="2.2s"  repeatCount="indefinite"><mpath xlink:href="#p5"/></animateMotion></circle>
+
+  <!-- source pills -->
+  <g>
+    <g transform="translate(0,0)" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" begin="0.10s" dur="0.5s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="translate" from="-14 0" to="0 0" begin="0.10s" dur="0.5s" fill="freeze"/>
+      <rect x="28" y="64" width="188" height="36" rx="18" fill="#ffffff" stroke="#cfcfd3"/>
+      <circle cx="46" cy="82" r="3.5" fill="#0b6e4f"/>
+      <text x="60" y="87" font-size="14" fill="#0b0b0c">Remotive</text>
+      <text x="150" y="87" font-size="10" fill="#9aa0a6">remote</text>
+    </g>
+    <g transform="translate(0,0)" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" begin="0.25s" dur="0.5s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="translate" from="-14 0" to="0 0" begin="0.25s" dur="0.5s" fill="freeze"/>
+      <rect x="28" y="108" width="188" height="36" rx="18" fill="#ffffff" stroke="#cfcfd3"/>
+      <circle cx="46" cy="126" r="3.5" fill="#0b6e4f"/>
+      <text x="60" y="131" font-size="14" fill="#0b0b0c">The Muse</text>
+      <text x="138" y="131" font-size="10" fill="#9aa0a6">incl. on-site</text>
+    </g>
+    <g transform="translate(0,0)" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" begin="0.40s" dur="0.5s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="translate" from="-14 0" to="0 0" begin="0.40s" dur="0.5s" fill="freeze"/>
+      <rect x="28" y="152" width="188" height="36" rx="18" fill="#ffffff" stroke="#cfcfd3"/>
+      <circle cx="46" cy="170" r="3.5" fill="#0b6e4f"/>
+      <text x="60" y="175" font-size="14" fill="#0b0b0c">Arbeitnow</text>
+      <text x="150" y="175" font-size="10" fill="#9aa0a6">EU</text>
+    </g>
+    <g transform="translate(0,0)" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" begin="0.55s" dur="0.5s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="translate" from="-14 0" to="0 0" begin="0.55s" dur="0.5s" fill="freeze"/>
+      <rect x="28" y="196" width="188" height="36" rx="18" fill="#ffffff" stroke="#cfcfd3"/>
+      <circle cx="46" cy="214" r="3.5" fill="#0b6e4f"/>
+      <text x="60" y="219" font-size="14" fill="#0b0b0c">RemoteOK</text>
+      <text x="150" y="219" font-size="10" fill="#9aa0a6">remote</text>
+    </g>
+    <g transform="translate(0,0)" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" begin="0.70s" dur="0.5s" fill="freeze"/>
+      <animateTransform attributeName="transform" type="translate" from="-14 0" to="0 0" begin="0.70s" dur="0.5s" fill="freeze"/>
+      <rect x="28" y="240" width="188" height="36" rx="18" fill="#ffffff" stroke="#cfcfd3"/>
+      <circle cx="46" cy="258" r="3.5" fill="#0b6e4f"/>
+      <text x="60" y="263" font-size="14" fill="#0b0b0c">Jobicy</text>
+      <text x="150" y="263" font-size="10" fill="#9aa0a6">remote</text>
+    </g>
+  </g>
+
+  <!-- hub -->
+  <rect x="596" y="112" width="256" height="96" rx="16" fill="#0b6e4f" opacity="0.16">
+    <animate attributeName="opacity" values="0.10;0.26;0.10" dur="2.6s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="600" y="116" width="248" height="88" rx="14" fill="#0b6e4f"/>
+  <text x="620" y="150" font-size="19" font-family="Georgia, 'Times New Roman', serif" fill="#ffffff">Job Search Dossier</text>
+  <text x="620" y="176" font-size="12" fill="#d9f3e8">rank · fit score · link-check</text>
+  <text x="28" y="300" font-size="11" fill="#6b6b70">Fetched in parallel · de-duped · ranked by fit · every link verified before it reaches your board</text>
+</svg>

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 340" width="880" height="340" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" role="img" aria-label="The candidate profile fields: name, title, summary, skills, experience, location, education and optional email">
+  <rect x="8" y="8" width="864" height="324" rx="16" fill="#ffffff" stroke="#d9d9dd" stroke-width="1.5"/>
+  <text x="28" y="38" font-size="13" letter-spacing="2.5" fill="#9c7a14">WHAT YOUR PROFILE NEEDS</text>
+  <text x="28" y="58" font-size="11" fill="#6b6b70">Saved in your browser · passed inline to every tool (the server stays stateless)</text>
+
+  <!-- "ready" chip -->
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="1.55s" dur="0.5s" fill="freeze"/>
+    <rect x="650" y="20" width="198" height="30" rx="15" fill="#0b6e4f"/>
+    <text x="668" y="40" font-size="12" letter-spacing="1.5" fill="#ffffff">✓ READY TO SEARCH</text>
+  </g>
+
+  <!-- field cell template: emerald tick + label + value, staggered reveal -->
+  <!-- LEFT COLUMN -->
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.15s" dur="0.5s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="translate" from="0 8" to="0 0" begin="0.15s" dur="0.5s" fill="freeze"/>
+    <rect x="28" y="84" width="3" height="40" fill="#0b6e4f"/>
+    <text x="44" y="98" font-size="11" letter-spacing="1.2" fill="#8a8f95">FULL NAME</text>
+    <text x="44" y="120" font-size="16" fill="#0b0b0c">Ada Lovelace</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.45s" dur="0.5s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="translate" from="0 8" to="0 0" begin="0.45s" dur="0.5s" fill="freeze"/>
+    <rect x="28" y="146" width="3" height="40" fill="#0b6e4f"/>
+    <text x="44" y="160" font-size="11" letter-spacing="1.2" fill="#8a8f95">DESIRED / CURRENT TITLE</text>
+    <text x="44" y="182" font-size="16" fill="#0b0b0c">Senior Data Engineer</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.75s" dur="0.5s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="translate" from="0 8" to="0 0" begin="0.75s" dur="0.5s" fill="freeze"/>
+    <rect x="28" y="208" width="3" height="40" fill="#0b6e4f"/>
+    <text x="44" y="222" font-size="11" letter-spacing="1.2" fill="#8a8f95">SKILLS</text>
+    <text x="44" y="244" font-size="16" fill="#0b0b0c">python, spark, sql, airflow</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="1.05s" dur="0.5s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="translate" from="0 8" to="0 0" begin="1.05s" dur="0.5s" fill="freeze"/>
+    <rect x="28" y="270" width="3" height="40" fill="#0b6e4f"/>
+    <text x="44" y="284" font-size="11" letter-spacing="1.2" fill="#8a8f95">YEARS OF EXPERIENCE</text>
+    <text x="44" y="306" font-size="16" fill="#0b0b0c">6 years</text>
+  </g>
+
+  <!-- RIGHT COLUMN -->
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.30s" dur="0.5s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="translate" from="0 8" to="0 0" begin="0.30s" dur="0.5s" fill="freeze"/>
+    <rect x="452" y="84" width="3" height="40" fill="#9c7a14"/>
+    <text x="468" y="98" font-size="11" letter-spacing="1.2" fill="#8a8f95">LOCATION</text>
+    <text x="468" y="120" font-size="16" fill="#0b0b0c">London, UK</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.60s" dur="0.5s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="translate" from="0 8" to="0 0" begin="0.60s" dur="0.5s" fill="freeze"/>
+    <rect x="452" y="146" width="3" height="40" fill="#9c7a14"/>
+    <text x="468" y="160" font-size="11" letter-spacing="1.2" fill="#8a8f95">EDUCATION</text>
+    <text x="468" y="182" font-size="16" fill="#0b0b0c">BSc Mathematics</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.90s" dur="0.5s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="translate" from="0 8" to="0 0" begin="0.90s" dur="0.5s" fill="freeze"/>
+    <rect x="452" y="208" width="3" height="40" fill="#9c7a14"/>
+    <text x="468" y="222" font-size="11" letter-spacing="1.2" fill="#8a8f95">PROFESSIONAL SUMMARY</text>
+    <text x="468" y="244" font-size="16" fill="#0b0b0c">Builds reliable data platforms</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="1.20s" dur="0.5s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="translate" from="0 8" to="0 0" begin="1.20s" dur="0.5s" fill="freeze"/>
+    <rect x="452" y="270" width="3" height="40" fill="#9c7a14"/>
+    <text x="468" y="284" font-size="11" letter-spacing="1.2" fill="#8a8f95">EMAIL (OPTIONAL)</text>
+    <text x="468" y="306" font-size="16" fill="#0b0b0c">ada@example.com</text>
+  </g>
+</svg>

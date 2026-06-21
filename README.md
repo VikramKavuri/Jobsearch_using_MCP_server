@@ -1,84 +1,89 @@
-# Job Search MCP
+<h1 align="center">Job Search Dossier</h1>
 
-A job-search assistant that runs as **a web app and a connectable MCP server** — and
-deploys to Vercel with **zero API keys**. It ranks roles against your profile,
-drafts cover letters, and rehearses answers to application questions.
+<p align="center">
+  A job-search assistant that ranks roles for a candidate, drafts cover letters,
+  and rehearses answers — as a <strong>web app</strong>, a <strong>REST API</strong>, and a connectable <strong>MCP server</strong>.<br/>
+  Runs with <strong>zero API keys</strong> by default; pulls real jobs from five public sources when you want them.
+</p>
 
-By default everything runs in a deterministic **demo mode** (pure TypeScript, no
-secrets, no network). Add a single API key and it auto-upgrades to **live AI**.
+<p align="center">
+  <a href="https://job-search-mcp-tau.vercel.app">
+    <img alt="Live Demo" src="https://img.shields.io/badge/▶_Live_Demo-job--search--mcp--tau.vercel.app-0b6e4f?style=for-the-badge&labelColor=0b0b0c">
+  </a>
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-0b0b0c?style=for-the-badge">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-68_passing-9c7a14?style=for-the-badge">
+</p>
 
-> This is a clean Vercel rebuild of the original Hugging Face Spaces "Job Search
-> MCP Server" concept. The original was a Gradio app with a >2 GB
-> torch/faiss/transformers stack that cannot run on Vercel's serverless
-> functions, and its `src/` core was missing from git history. This rebuild keeps
-> the idea — four job-search capabilities exposed over MCP — on a lightweight,
-> deployable stack.
+> **▶ Try it now:** **https://job-search-mcp-tau.vercel.app**
+> No sign-up, no keys. Fill a profile, search jobs, generate a cover letter, rehearse a Q&A.
 
-## The four capabilities
+---
 
-| Capability | Demo mode (no key) | Live mode (with key) |
+## Where it finds jobs
+
+Tick **"Include live listings"** and it fetches from **five keyless sources in parallel**, filtered by your profile's role and location, then merges, de-duplicates, ranks, and **verifies every link is reachable before showing it**.
+
+<p align="center">
+  <img src="docs/assets/sources.svg" alt="Jobs are pulled from Remotive, The Muse, Arbeitnow, RemoteOK and Jobicy, then ranked and link-checked" width="100%">
+</p>
+
+| Source | Coverage | Filters used |
 |---|---|---|
-| **Profile** | Validate + normalize a profile (skills, experience, etc.) | same |
-| **Job search** | Rank jobs by **TF-IDF cosine** vs. your query + profile; returns a `fit_score` (0–100) and `match_reasons` | swap in real embeddings if configured |
+| **Remotive** | Remote roles | keyword search |
+| **The Muse** | Remote **and on-site** | location |
+| **Arbeitnow** | EU + remote | ranking |
+| **RemoteOK** | Remote roles | role tag |
+| **Jobicy** | Remote roles | region + role tag |
+
+Without live listings, search runs instantly over a bundled, illustrative sample dataset.
+
+## Your profile
+
+Everything is keyed off a simple candidate profile. It's saved **only in your browser** (`localStorage`) and passed inline to each call — the server stays stateless.
+
+<p align="center">
+  <img src="docs/assets/profile.svg" alt="Profile fields: full name, title, summary, skills, years of experience, location, education and optional email" width="100%">
+</p>
+
+| Field | Used for |
+|---|---|
+| **Full name** | cover letters, Q&A voice |
+| **Desired / current title** | job ranking + role filter |
+| **Professional summary** | ranking, letters, Q&A |
+| **Skills** | ranking, `fit_score`, match reasons |
+| **Years of experience** | letters, Q&A |
+| **Location** | location filter across sources |
+| **Education** | Q&A answers |
+| **Email** *(optional)* | validated if provided |
+
+## The four capabilities — demo vs. live
+
+| Capability | Zero-key demo | With an API key |
+|---|---|---|
+| **Profile** | Validate + normalize your profile | same |
+| **Job search** | Rank by **TF-IDF cosine** → `fit_score` (0–100) + `match_reasons` | + live multi-source listings |
 | **Cover letter** | Fill a tone-aware **template** (professional / casual / enthusiastic / formal) | **LLM-written** letter |
-| **Q&A** | Heuristic answer assembled from your profile | **LLM-written** answer |
+| **Q&A** | Heuristic answer from your profile | **LLM-written** answer |
 
-All four are reachable three ways: the **web UI**, the **REST API**, and as **MCP
-tools** — all backed by the same pure functions in `lib/`.
+The live deployment runs in **Live AI mode** via [Groq](https://console.groq.com) (`llama-3.3-70b-versatile`), so letters and answers are model-generated. The banner in the UI shows **Demo** vs **Live AI** at a glance.
 
-## Run locally
+## Use it as an MCP server
 
-```bash
-npm install
-npm run dev          # http://localhost:3000
-npm test             # 52 unit tests (pure functions, no network)
-```
+This app **is** a remote MCP server — connect any MCP client (Claude Desktop, Claude Code, Cursor, …) and let the model fetch jobs for a candidate.
 
-No `.env` needed — it starts in demo mode. To try live AI, copy `.env.example`
-to `.env.local` and set one key (e.g. `ANTHROPIC_API_KEY`).
-
-## Deploy to Vercel
-
-```bash
-npm i -g vercel
-vercel               # preview deploy (prompts for login the first time)
-vercel --prod        # production deploy
-```
-
-Vercel auto-detects Next.js — no extra config. To enable live AI on the
-deployment, add an API key under **Project → Settings → Environment Variables**
-(`GROQ_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `HF_TOKEN`) and
-redeploy. Provider auto-detection order is `groq > anthropic > openai >
-huggingface`; [Groq](https://console.groq.com) is fast and free. The banner in the
-UI shows whether you're in **Demo** or **Live AI** mode.
-
-## Connect as an MCP server
-
-The MCP endpoint is at **`/api/mcp`** (Streamable HTTP, with SSE fallback). Point
-any MCP client at `https://<your-deployment>/api/mcp`.
-
-**Claude Desktop / Cursor** (`claude_desktop_config.json` / MCP settings):
+- **Endpoint:** `https://job-search-mcp-tau.vercel.app/api/mcp` (Streamable HTTP + SSE)
+- **Tools:** `profile_upsert`, `jobs_search`, `letter_generate`, `qa_reply`
 
 ```json
 {
   "mcpServers": {
-    "job-search": {
-      "url": "https://<your-deployment>/api/mcp"
-    }
+    "job-search": { "url": "https://job-search-mcp-tau.vercel.app/api/mcp" }
   }
 }
 ```
 
-Tools exposed: `profile_upsert`, `jobs_search`, `letter_generate`, `qa_reply`.
-
-Quick check against a running server:
-
-```bash
-curl -s -X POST http://localhost:3000/api/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
-```
+> *"Find remote data-engineering roles for someone strong in Python, Spark and SQL"*
+> → the model calls `jobs_search` and returns ranked, link-checked jobs with fit scores.
 
 ## REST API
 
@@ -86,49 +91,63 @@ curl -s -X POST http://localhost:3000/api/mcp \
 |---|---|---|
 | `GET /api/config` | — | `{ mode, provider, model, liveAiEnabled }` |
 | `POST /api/profile` | profile fields | `{ profile }` (normalized) |
-| `POST /api/jobs` | `{ query, profile, limit?, remoteOnly?, location?, live? }` | `{ jobs, count }` |
+| `POST /api/jobs` | `{ query, profile, limit?, remoteOnly?, location?, live? }` | `{ jobs, count, sources, validated }` |
 | `POST /api/letter` | `{ profile, job:{title,company}, tone? }` | `{ text, tone, mode }` |
 | `POST /api/qa` | `{ question, profile, context? }` | `{ answer, mode }` |
 
-Set `live: true` on `/api/jobs` to pull keyless live listings from **five public
-sources** — Remotive, The Muse, Arbeitnow, RemoteOK, and Jobicy — fetched in
-parallel, filtered by the profile's role and location, merged + de-duplicated,
-and ranked. **Every live link is reachability-checked before it's returned** (404/
-gone links are dropped); the response includes `sources`, `count`, and a
-`validated` flag. Falls back to the bundled sample if all sources fail.
+```bash
+curl -s -X POST https://job-search-mcp-tau.vercel.app/api/jobs \
+  -H "Content-Type: application/json" \
+  -d '{"query":"python data engineer","profile":{"skills":["python","spark","sql"]},"live":true,"limit":5}'
+```
 
-> Attribution: live data comes from Remotive, The Muse, Arbeitnow, RemoteOK and
-> Jobicy. RemoteOK and The Muse ask that you credit them when displaying results.
+## Run locally
 
-## How it works
+```bash
+npm install
+npm run dev      # http://localhost:3000
+npm test         # 68 unit tests (pure functions, no network)
+```
+
+No `.env` needed — it starts in demo mode. To enable live AI, copy `.env.example`
+to `.env.local` and set one key (`GROQ_API_KEY`, `ANTHROPIC_API_KEY`,
+`OPENAI_API_KEY`, or `HF_TOKEN`).
+
+## Deploy to Vercel
+
+```bash
+npm i -g vercel
+vercel --prod    # prompts for login the first time
+```
+
+Vercel auto-detects Next.js. Add an API key under **Project → Settings → Environment
+Variables** to enable live AI, then redeploy.
+
+## How it's built
 
 ```
 app/
-  page.tsx                     Web UI: 4 tabs (Profile, Job Search, Cover Letter, Q&A)
+  page.tsx                       Web UI: 4 tabs (Profile, Job Search, Cover Letter, Q&A)
   api/{config,profile,jobs,letter,qa}/route.ts   thin REST adapters
-  api/[transport]/route.ts     MCP endpoint (4 tools) at /api/mcp
+  api/[transport]/route.ts       MCP endpoint (4 tools) at /api/mcp
 lib/
   tools/{profile,search,letter,qa}.ts   pure capability functions (+ unit tests)
-  ranking.ts                   TF-IDF cosine over job text (pure TS)
-  config.ts                    env → real-vs-demo decision (the only env reader)
-  llm.ts                       provider abstraction (Groq / OpenAI / Anthropic / HF ↔ demo)
-  jobs-source.ts               bundled sample + optional keyless live fetch
-  service.ts                   composition root used by both REST and MCP
-data/sample-jobs.json          16 deduped, diverse sample roles
+  ranking.ts                     TF-IDF cosine over job text (pure TS)
+  jobs-source.ts                 5 live sources + bundled sample, mappers, dedupe
+  link-check.ts                  reachability validation for live job links
+  config.ts                      env → real-vs-demo decision (the only env reader)
+  llm.ts                         provider abstraction (Groq / OpenAI / Anthropic / HF ↔ demo)
+  service.ts                     composition root shared by REST + MCP
 ```
 
-The capability functions in `lib/tools/*` and `lib/ranking.ts` are **pure** — no
-Next, no env, no network — so they're unit-tested in isolation. `lib/config.ts` is
-the single place that reads env and decides demo-vs-live; tools receive an injected
-`llm` and never branch on environment themselves. That's why the REST API and the
-MCP server can never drift: they call the same `lib/service.ts` functions.
+The capability functions in `lib/tools/*` and `lib/ranking.ts` are **pure** — no Next,
+no env, no network — and unit-tested in isolation. `lib/config.ts` is the only place
+that reads env and decides demo-vs-live; tools receive an injected `llm` and never
+branch on environment. REST and MCP both call `lib/service.ts`, so the two faces can
+never drift.
 
-The server is **stateless** (serverless-friendly): your profile is saved to the
-browser's `localStorage` and passed inline to each call — no database required.
+## Notes
 
-## Notes / out of scope
-
-- No torch / faiss / Gradio / GPU. Ranking is pure-TS TF-IDF; "real embeddings" is
-  a documented upgrade path, not a hard dependency.
-- No durable multi-user database (stateless by design).
-- No scraping beyond the keyless Remotive API.
+- **Attribution:** live job data comes from Remotive, The Muse, Arbeitnow, RemoteOK and Jobicy. RemoteOK and The Muse ask that you credit them when displaying results.
+- Stateless by design — no database; your profile lives in the browser.
+- A clean Vercel rebuild of the original Hugging Face Spaces "Job Search MCP" concept (no torch / faiss / Gradio).
