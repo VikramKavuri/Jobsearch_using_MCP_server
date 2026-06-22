@@ -5,10 +5,20 @@
 // exists", so we keep them rather than discard real jobs over a false negative.
 
 import type { Job } from "./types";
+import type { Cache } from "./cache";
 
 const CHECK_TIMEOUT_MS = 5000;
 const MAX_CONCURRENCY = 8;
 const UA = "job-search-mcp/1.0 (+https://job-search-mcp-tau.vercel.app)";
+
+// Link-status cache TTLs: alive links rarely die, so cache them long; dead links
+// get a shorter TTL so a re-posted/fixed URL gets re-checked sooner.
+const LINK_ALIVE_TTL = 21_600; // 6h
+const LINK_DEAD_TTL = 1_800; // 30m
+
+export function linkCacheKey(url: string): string {
+  return `link:v1:${url}`;
+}
 
 /** Pure decision: does this HTTP status mean the link is dead? */
 export function isDeadStatus(status: number): boolean {
@@ -53,19 +63,46 @@ export async function checkUrlAlive(
 
 /** Validate many job links with bounded concurrency, preserving input order and
  * returning only the jobs whose links are reachable. */
+export interface ValidateOptions {
+  timeoutMs?: number;
+  concurrency?: number;
+  /** Optional link-status cache: skips the network for already-known URLs. */
+  cache?: Cache;
+  /** Injectable probe (defaults to a real network check) — keeps tests offline. */
+  check?: (url: string) => Promise<boolean>;
+}
+
+/** Validate many job links with bounded concurrency, returning only the jobs
+ * whose links are reachable. When a cache is supplied, known URLs are answered
+ * from it (no network) and freshly-checked URLs are written back — so repeat
+ * searches do zero link checks. */
 export async function validateJobLinks<T extends Job>(
   jobs: T[],
-  opts: { timeoutMs?: number; concurrency?: number } = {},
+  opts: ValidateOptions = {},
 ): Promise<T[]> {
   const timeoutMs = opts.timeoutMs ?? CHECK_TIMEOUT_MS;
   const concurrency = opts.concurrency ?? MAX_CONCURRENCY;
+  const cache = opts.cache;
+  const check = opts.check ?? ((url: string) => checkUrlAlive(url, timeoutMs));
   const alive = new Array<boolean>(jobs.length).fill(false);
 
   let cursor = 0;
   async function worker() {
     while (cursor < jobs.length) {
       const i = cursor++;
-      alive[i] = await checkUrlAlive(jobs[i].url, timeoutMs);
+      const url = jobs[i].url;
+
+      const cached = cache ? await cache.get<boolean>(linkCacheKey(url)) : null;
+      if (cached !== null && cached !== undefined) {
+        alive[i] = cached;
+        continue;
+      }
+
+      const ok = await check(url);
+      alive[i] = ok;
+      if (cache) {
+        await cache.set(linkCacheKey(url), ok, ok ? LINK_ALIVE_TTL : LINK_DEAD_TTL);
+      }
     }
   }
   await Promise.all(

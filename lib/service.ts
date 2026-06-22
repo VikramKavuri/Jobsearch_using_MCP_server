@@ -7,6 +7,7 @@ import { loadConfig } from "./config";
 import { createLlm } from "./llm";
 import { getJobs } from "./jobs-source";
 import { validateJobLinks } from "./link-check";
+import { getCache } from "./cache";
 import { normalizeProfile, type ProfileInput } from "./tools/profile";
 import { searchJobs, type SearchInput } from "./tools/search";
 import { generateLetter, type LetterInput } from "./tools/letter";
@@ -73,7 +74,7 @@ export async function runSearch(input: SearchArgs): Promise<SearchResult> {
   });
 
   const jobs = validate
-    ? (await validateJobLinks(ranked)).slice(0, limit)
+    ? (await validateJobLinks(ranked, { cache: getCache() })).slice(0, limit)
     : ranked.slice(0, limit);
 
   return {
@@ -82,6 +83,18 @@ export async function runSearch(input: SearchArgs): Promise<SearchResult> {
     sources: [...new Set(jobs.map((j) => j.source).filter(Boolean) as string[])],
     validated: validate,
   };
+}
+
+/** Pre-warm the caches off the request path: run a set of common live searches
+ * so subsequent user requests hit warm source + link caches. Returns a summary
+ * for the revalidation endpoint. */
+export async function warmCache(
+  queries: { query?: string; location?: string }[] = [{}],
+): Promise<{ warmed: number; backend: string }> {
+  for (const q of queries) {
+    await runSearch({ ...q, live: true, limit: 12 });
+  }
+  return { warmed: queries.length, backend: getCache().backend };
 }
 
 export async function runLetter(

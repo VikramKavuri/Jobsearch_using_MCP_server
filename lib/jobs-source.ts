@@ -6,12 +6,19 @@
 
 import type { Job } from "./types";
 import sampleData from "../data/sample-jobs.json";
+import { getCache, slug, type Cache } from "./cache";
 
 /** User-Agent used for every outbound request — some sources (RemoteOK) block
  * the default fetch agent. */
 const UA = "job-search-mcp/1.0 (+https://job-search-mcp-tau.vercel.app)";
 const PER_SOURCE_LIMIT = 25;
 const FETCH_TIMEOUT_MS = 7000;
+/** How long merged live results stay cached. Jobs don't change second-to-second. */
+const SOURCE_TTL = 600; // 10 minutes
+
+export function jobsCacheKey(query = "", location = ""): string {
+  return `jobs:v1:${slug(query || "all")}:${slug(location || "any")}`;
+}
 
 export function getSampleJobs(): Job[] {
   return (sampleData as Job[]).map((j) => ({ ...j, source: "Sample" }));
@@ -336,17 +343,29 @@ export function sourcesOf(jobs: Job[]): string[] {
 
 /** Combined source. Demo: the bundled sample only. Live: every source fetched
  * in parallel, merged + deduped, with the sample as a fallback if all live
- * sources fail. */
+ * sources fail. Live results are cached (keyed by role + location) so repeat
+ * searches within the TTL skip the five outbound calls entirely. */
 export async function getJobs(
-  opts: { live?: boolean } & SourceFilters = {},
+  opts: { live?: boolean; cache?: Cache } & SourceFilters = {},
 ): Promise<Job[]> {
   const sample = getSampleJobs();
   if (!opts.live) return sample;
+
+  const cache = opts.cache ?? getCache();
+  const key = jobsCacheKey(opts.query, opts.location);
+
+  const cached = await cache.get<Job[]>(key);
+  if (cached && cached.length > 0) return cached;
 
   const filters: SourceFilters = { query: opts.query, location: opts.location };
   const settled = await Promise.all(
     LIVE_SOURCES.map((fetcher) => fetcher(filters).catch(() => [] as Job[])),
   );
   const live = dedupeJobs(settled.flat());
-  return live.length > 0 ? live : sample;
+
+  if (live.length > 0) {
+    await cache.set(key, live, SOURCE_TTL);
+    return live;
+  }
+  return sample;
 }

@@ -37,12 +37,14 @@ POST /api/jobs { query, profile, location, live: true }
   ├─ lib/service.runSearch
   │    ├─ role  = query || profile.title          ← profile-driven filters
   │    ├─ getJobs({ live, query: role, location })
-  │    │     └─ Promise.all([ Remotive, The Muse, Arbeitnow, RemoteOK, Jobicy ])
+  │    │     ├─ cache.get(jobs:role:location)      ← HIT → return cached, 0 calls
+  │    │     └─ MISS: Promise.all([ Remotive, The Muse, Arbeitnow, RemoteOK, Jobicy ])
   │    │           each: fetch → map → graceful [] on failure
-  │    │     └─ dedupeJobs(...)                    ← by id, then title+company
+  │    │           → dedupeJobs(...) → cache.set(TTL 10m)
   │    ├─ searchJobs(...)                          ← TF-IDF cosine + token location filter
   │    │     └─ fit_score (0–100) + match_reasons
-  │    └─ validateJobLinks(top N)                  ← HEAD/GET, drop only 404/410/hard-fail
+  │    └─ validateJobLinks(top N, cache)           ← cached status, else HEAD/GET;
+  │                                                   drop only 404/410/hard-fail
   │
   └─ { jobs, count, sources, validated }
 ```
@@ -51,6 +53,14 @@ Key property: **one slow or dead source never breaks search.** Each fetch resolv
 to `[]` on any error; if every live source fails, the bundled sample is the
 fallback so the board is never empty.
 
+**Caching.** The merged source results and each link's reachability are cached
+(`lib/cache.ts`). A cold search (first time for a query) fetches + validates and
+populates both caches; a warm search reuses them and does **zero** outbound calls.
+Measured: **~3.7s cold → ~0.08s warm** (≈45× faster), same results. The cache is
+in-process by default and upgrades to Vercel KV / Upstash when `KV_REST_API_URL` +
+`KV_REST_API_TOKEN` are set, sharing state across instances. `/api/cron/revalidate`
+warms popular queries off the request path.
+
 ## Design decisions & trade-offs
 
 | Decision | Why | Trade-off |
@@ -58,34 +68,40 @@ fallback so the board is never empty.
 | **TF-IDF cosine**, pure TS | Deterministic, zero-dependency, runs on serverless with no model to load; makes tests reproducible offline | Lexical, not semantic — "ML engineer" won't match "machine-learning" by meaning. Semantic embeddings are the documented upgrade path. |
 | **Stateless** (profile in `localStorage`) | No DB to provision; trivially horizontally scalable; no PII at rest | No cross-device sync, no server-side history |
 | **Demo-by-default**, key-optional | Anyone can run/deploy/test with zero secrets; auto-upgrades to live AI | Two code paths to keep coherent (handled by the injected `Llm` + tests on both) |
-| **Validate links per request** | Honest boards — never show a dead posting | Adds 3–8s latency and N outbound requests; no caching yet |
+| **Validate links, then cache** | Honest boards — never show a dead posting — without paying for it twice | Cold search still pays the validation cost (~3–4s); warm searches reuse cached status |
 | **Lenient link validation** (drop only 404/410/hard-fail) | Bot walls return 401/403/405 on real pages; being strict would drop good jobs | A page that 500s permanently could slip through |
 
-## What would change to run this at scale
+## Scaling: done vs. next
 
-This is a demo. To make it a production system serving real traffic, the honest
-list of next steps:
+**Implemented**
 
-1. **Cache the source fetches** (Redis/Vercel KV, ~10-min TTL keyed by role+location)
-   instead of hitting five APIs on every request.
-2. **Cache link-validation results** and move validation off the request path (a
-   background job that marks links stale), so search stays sub-second.
-3. **Swap TF-IDF for embeddings** (e.g. a vector store) for semantic matching, with
-   the lexical path as a cheap fallback.
-4. **Persistence + auth** for saved profiles, search history, and application tracking.
-5. **Observability**: structured logs, per-source success metrics, p95 latency, and
-   alerting on source outages.
-6. **Resilience**: per-source circuit breakers and rate limiting; pagination across
-   sources rather than a fixed `limit` each.
+- **Cache the source fetches** — Vercel KV / in-memory, 10-min TTL keyed by
+  role+location, so repeat searches skip the five APIs (`lib/cache.ts`,
+  `getJobs`).
+- **Cache link-validation** — each URL's reachability is validated once and reused;
+  warm searches do zero link checks (`validateJobLinks` + cache). A cron endpoint
+  (`/api/cron/revalidate`) warms popular queries off the request path.
 
-The current boundaries make every one of these a localized change: caching and
-embeddings live behind `lib/jobs-source.ts` / `lib/ranking.ts`; persistence slots in
-at `lib/service.ts`; none of it touches the pure tools or the three adapters.
+**Still to do**
+
+- **Swap TF-IDF for embeddings** (a vector store) for semantic matching, with the
+  lexical path as a cheap fallback.
+- **Persistence + auth** for saved profiles, search history, and application tracking.
+- **Observability**: structured logs, per-source success metrics, p95 latency, and
+  alerting on source outages.
+- **Resilience**: per-source circuit breakers and rate limiting; pagination across
+  sources rather than a fixed `limit` each; a real queue (SQS/Cloud Tasks) for
+  validation instead of `waitUntil`-style background work.
+
+The boundaries make each of these a localized change: caching and embeddings live
+behind `lib/jobs-source.ts` / `lib/ranking.ts`; persistence slots in at
+`lib/service.ts`; none of it touches the pure tools or the three adapters.
 
 ## Testing
 
-68 unit tests (Vitest) cover the pure surface: ranking determinism and bounds,
+77 unit tests (Vitest) cover the pure surface: ranking determinism and bounds,
 config's env→provider decision, all four tools (demo and injected-LLM paths via a
-fake `Llm`), the five source mappers, the location filter, and dead-link
-classification. Network code is verified against the live APIs rather than mocked.
-CI runs typecheck → tests → build on every push.
+fake `Llm`), the five source mappers, the location filter, dead-link classification,
+the cache (TTL expiry, backend selection), and the link-status cache (hit/miss/write
+via an injected checker — no network). Live network paths are verified against the
+real APIs rather than mocked. CI runs typecheck → tests → build on every push.
